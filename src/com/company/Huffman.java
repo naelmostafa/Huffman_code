@@ -1,39 +1,66 @@
 package com.company;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 public class Huffman {
     private Node root;
     private Map<Character, Integer> freqMap;
-    private String text;
+    private Map<Character, String> codeword;
 
-    public Huffman(String text) {
+    public Huffman(String text) throws IOException {
         readGenerateFreq(text);
-        freqMapGenerator();
-        this.text = text;
+        creatTree();
+        generateCodeword();
     }
 
-    private void readGenerateFreq(String fileName) {
+    private void readGenerateFreq(String fileName) throws IOException {
         freqMap = new HashMap<>();
-        /*  read file
-            loop on file by char
-            store in hashMap (char, freq) */
-        // freqMap.put(character, freqMap.getOrDefault(character, 0) + 1);
+        /* Creation of File Descriptor for input file */
+        File f = new File(fileName);
 
-    }
+        /* Creation of File Reader object */
+        FileReader fr = new FileReader(f);
 
-    /* Create Tree root Node point on tree root */
-    private void creatTree() {
-        /*  priority Queue
-            generate codeword */
-    }
+        /* Creation of BufferedReader object */
+        BufferedReader br = new BufferedReader(fr);
 
-    private void freqMapGenerator() {
-        /* loop on all file to get freq of char and store them in HashMap */
-        freqMap = new HashMap<>();
-        for (Character character : text.toCharArray()) {
+        /* Read char by Char */
+        int c = 0;
+        while ((c = br.read()) != -1) {
+            char character = (char) c;          // converting integer to char
             freqMap.put(character, freqMap.getOrDefault(character, 0) + 1);
         }
+    }
+
+    /*  priority Queue
+        generate codeword */
+    private void creatTree() {
+        Queue<Node> queue = new PriorityQueue<>();
+        freqMap.forEach((character, frequency) -> queue.add(new Leaf(character, frequency)));
+
+        /* Create Tree root Node point on tree root */
+        while (queue.size() > 1) {
+            queue.add(new Node(queue.poll(), Objects.requireNonNull(queue.poll())));
+        }
+        root = queue.poll();
+    }
+
+    private void generateCodeword() {
+        codeword = new HashMap<>();
+        __generateCodeword(root, "");
+    }
+
+    private void __generateCodeword(Node node, String code) {
+        if (node instanceof Leaf) {
+            codeword.put(((Leaf) node).getCharacter(), code);
+            return;
+        }
+        __generateCodeword(node.getLeftNode(), code.concat("0"));
+        __generateCodeword(node.getRightNode(), code.concat("1"));
+    }
+
+    /* TODO: Encode replace every character with its corresponding code word */
+    private void encode() {
     }
 }
