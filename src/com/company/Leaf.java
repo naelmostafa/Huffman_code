@@ -1,19 +1,16 @@
 package com.company;
 
-public class Leaf {
+public class Leaf extends Node {
     private final char character;
-    private final int freq;
 
-    public Leaf(char character, int freq) {
+
+    public Leaf(char character, int frequency) {
+        super(frequency);
         this.character = character;
-        this.freq = freq;
     }
 
     public char getCharacter() {
         return character;
     }
 
-    public int getFreq() {
-        return freq;
-    }
 }
