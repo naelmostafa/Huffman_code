@@ -8,18 +8,15 @@ public class Huffman {
     private Map<Character, Integer> freqMap;
     private Map<Character, String> codeword;
 
-    public Huffman(char type, String filename) throws IOException {
-        if (type == 'c') {
-            encode(filename);
-        } else if (type == 'd') {
-            decode(filename);
-        }
+    public Huffman(String text) throws IOException {
+        readGenerateFreq(text);
+        encode();
     }
 
-    private void readGenerateFreq(String filename) throws IOException {
+    private void readGenerateFreq(String fileName) throws IOException {
         freqMap = new HashMap<>();
         /* Creation of File Descriptor for input file */
-        File f = new File(filename);
+        File f = new File(fileName);
 
         /* Creation of File Reader object */
         FileReader fr = new FileReader(f);
@@ -30,9 +27,6 @@ public class Huffman {
         /* Read char by Char */
         int c = 0;
         while ((c = br.read()) != -1) {
-            if (c == ' '){
-                continue;
-            }
             char character = (char) c;          // converting integer to char
             freqMap.put(character, freqMap.getOrDefault(character, 0) + 1);
         }
@@ -40,7 +34,7 @@ public class Huffman {
 
     /*  priority Queue
         generate codeword */
-    private void creatTree() {
+    private void createTree() {
         Queue<Node> queue = new PriorityQueue<>();
         freqMap.forEach((character, frequency) -> queue.add(new Leaf(character, frequency)));
 
@@ -65,24 +59,40 @@ public class Huffman {
         __generateCodeword(node.getRightNode(), code.concat("1"));
     }
 
-    /*  output extension ==> <id>.<n>.abc.exe.hc */
-    public void encode(String filename) throws IOException {
-        readGenerateFreq(filename);
-        creatTree();
+    /* TODO: Encode replace every character with its corresponding code word */
+    private void encode() throws IOException {
+
+        createTree();
         generateCodeword();
-        /* TODO: Encode replace every character with its corresponding code word */
 
+        FileWriter myWriter = new FileWriter("output.txt");
+
+        String result = freqMap.toString().replaceAll("[{}]"," ");
+
+        String s = result;
+
+        String[] pairs = s.split(",");
+        for (int i=0;i<pairs.length;i++) {
+            String pair = pairs[i];
+            myWriter.write(pair+"\n");
+            //System.out.println(pair);
+
+        }
+        //System.out.println();
+        myWriter.write("\n");
+        String resultCodeword = codeword.toString().replaceAll("[{}]"," ");
+
+        s = resultCodeword;
+
+        String[] pairsCodeWord = s.split(",");
+        for (int i=0;i<pairsCodeWord.length;i++) {
+            String pair = pairsCodeWord[i];
+            myWriter.write(pair+"\n");
+          //  System.out.println(pair);
+        }
+
+        myWriter.close();
     }
 
-    /* TODO: read after -1 => codewords ex: a:0 b:10 delimiter = ":" --- generate hashmap<Codeword>*/
-    public void decode(String filename) {
-        readEncoded(filename);
-        translateFile(filename, codeword);
-    }
 
-    private void translateFile(String filename, Map<Character, String> codeword) {
-    }
-
-    private void readEncoded(String filename) {
-    }
 }
