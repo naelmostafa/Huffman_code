@@ -7,33 +7,50 @@ public class Huffman {
     private Node root;
     private Map<Character, Integer> freqMap;
     private Map<Character, String> codeword;
+    private String filename;
 
-    public Huffman(String text) throws IOException {
-        readGenerateFreq(text);
-        encode();
+    public Huffman(String filename, char option) throws IOException {
+        option = Character.toLowerCase(option);
+        this.filename = filename;
+        if (option == 'c') {
+            readGenerateFreq(filename);
+            encode();
+        } else if (option == 'd') {
+            decompress();
+        }
     }
 
-    private void readGenerateFreq(String fileName) throws IOException {
+    public Map<Character, Integer> getFreqMap() {
+        return freqMap;
+    }
+
+    public Map<Character, String> getCodeword() {
+        return codeword;
+    }
+
+    private void readGenerateFreq(String filename) throws IOException {
         freqMap = new HashMap<>();
         /* Creation of File Descriptor for input file */
-        File f = new File(fileName);
+        File file = new File(filename);
 
         /* Creation of File Reader object */
-        FileReader fr = new FileReader(f);
+        FileReader reader = new FileReader(file);
 
         /* Creation of BufferedReader object */
-        BufferedReader br = new BufferedReader(fr);
+        BufferedReader buffer = new BufferedReader(reader);
 
         /* Read char by Char */
         int c = 0;
-        while ((c = br.read()) != -1) {
+        while ((c = buffer.read()) != -1) {
             char character = (char) c;          // converting integer to char
             freqMap.put(character, freqMap.getOrDefault(character, 0) + 1);
         }
+        reader.close();
     }
 
     /*  priority Queue
         generate codeword */
+
     private void createTree() {
         Queue<Node> queue = new PriorityQueue<>();
         freqMap.forEach((character, frequency) -> queue.add(new Leaf(character, frequency)));
@@ -46,7 +63,7 @@ public class Huffman {
     }
 
     private void generateCodeword() {
-        codeword = new HashMap<>();
+        codeword = new HashMap<Character, String>();
         __generateCodeword(root, "");
     }
 
@@ -59,40 +76,124 @@ public class Huffman {
         __generateCodeword(node.getRightNode(), code.concat("1"));
     }
 
+    /*
+    __generateCodeword(node.getLeftNode(), (byte) (code << 1));
+    __generateCodeword(node.getRightNode(), (byte) ((byte) (code << 1) + 1));
+    */
+
+    /**
+     * Writing the hashMap Directly
+     *
+     * @param output
+     */
+    private void writeCodeword(FileWriter output) throws IOException {
+        freqMap.forEach(((character, freq) -> {
+            try {
+                output.write(character);
+                output.write('~');
+                output.write(freq.toString());
+                output.write('-');
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
+        output.write("\n");
+    }
+
+    public void readCodeword(BufferedReader buffer) throws IOException {
+        freqMap = new HashMap<>();
+        int c = 0;
+        int temp;
+        while ((c = buffer.read()) != -1) {
+
+            char character = (char) c;          // converting integer to char
+            temp = buffer.read();
+            if (temp == '~') {
+                StringBuilder str = new StringBuilder();
+                while ((temp = buffer.read()) != '-') {
+                    str.append((char) temp);
+                }
+                freqMap.put(character, Integer.parseInt(str.toString()));
+            }
+            if ((char) temp == '\n') {
+                break;
+            }
+        }
+    }
+
+
     /* TODO: Encode replace every character with its corresponding code word */
     private void encode() throws IOException {
 
         createTree();
         generateCodeword();
 
-        FileWriter myWriter = new FileWriter("output.txt");
+        FileWriter myWriter = new FileWriter(filename + ".hc");
+        writeCodeword(myWriter);
 
-        String result = freqMap.toString().replaceAll("[{}]"," ");
-
-        String s = result;
-
+        /* Creation of File Descriptor for input file */
+        File file = new File(filename);
+        /* Creation of File Reader object */
+        FileReader reader = new FileReader(file);
+        /* Creation of BufferedReader object */
+        BufferedReader buffer = new BufferedReader(reader);
+        /* Read char by Char */
+        int c = 0;
+        while ((c = buffer.read()) != -1) {
+            char character = (char) c;          // converting integer to char
+            myWriter.write(codeword.get(character));
+        }
+        reader.close();
+/*        String s = freqMap.toString().replaceAll("[{}]", " ");
         String[] pairs = s.split(",");
-        for (int i=0;i<pairs.length;i++) {
-            String pair = pairs[i];
-            myWriter.write(pair+"\n");
+        for (String pair : pairs) {
+            output.write(pair + "\n");
             //System.out.println(pair);
-
         }
         //System.out.println();
-        myWriter.write("\n");
-        String resultCodeword = codeword.toString().replaceAll("[{}]"," ");
+        output.write("\n");
 
-        s = resultCodeword;
-
+        s = codeword.toString().replaceAll("[{}]", " ");
         String[] pairsCodeWord = s.split(",");
-        for (int i=0;i<pairsCodeWord.length;i++) {
-            String pair = pairsCodeWord[i];
-            myWriter.write(pair+"\n");
-          //  System.out.println(pair);
-        }
 
+        for (String pair : pairsCodeWord) {
+            output.write(pair + "\n");
+            //  System.out.println(pair);
+        }
+*/
         myWriter.close();
     }
 
+    private void decode(FileWriter fileWriter ,BufferedReader buffer) throws IOException {
+        int c = 0;
+        int temp;
+        /* read char by char to map in the tree */
+        while ((c = buffer.read()) != -1) {
+            System.out.println((char) c);
+        }
+
+    }
+    private void decompress() throws IOException {
+
+        /* Creation of File Descriptor for input file */
+        File file = new File(filename);
+
+        /* Creation of File Reader object */
+        FileReader reader = new FileReader(file);
+
+        /* Creation of BufferedReader object */
+        BufferedReader buffer = new BufferedReader(reader);
+
+        /* Creat decompressed File */
+        FileWriter fileWriter = new FileWriter("extracted"+filename);
+
+        readCodeword(buffer);
+        createTree();
+        generateCodeword();
+
+        decode(fileWriter, buffer);
+
+        reader.close();
+    }
 
 }
