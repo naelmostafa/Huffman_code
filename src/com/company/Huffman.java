@@ -9,13 +9,13 @@ public class Huffman {
     private Map<Character, String> codeword;
     private String filename;
 
-    public Huffman(String filename, char option) throws IOException {
-        option = Character.toLowerCase(option);
+    public Huffman(String option, String filename) throws IOException {
+        option = option.toLowerCase();
         this.filename = filename;
-        if (option == 'c') {
+        if (option.equals("c")) {
             readGenerateFreq(filename);
             encode();
-        } else if (option == 'd') {
+        } else if (option.equals("d")) {
             decompress();
         }
     }
@@ -82,7 +82,7 @@ public class Huffman {
     */
 
     /**
-     * Writing the hashMap Directly
+     * Writing the freq
      *
      * @param output
      */
@@ -104,7 +104,7 @@ public class Huffman {
         freqMap = new HashMap<>();
         int c = 0;
         int temp;
-        while ((c = buffer.read()) != -1) {
+        while ((c = buffer.read()) != '\n') {
 
             char character = (char) c;          // converting integer to char
             temp = buffer.read();
@@ -114,13 +114,13 @@ public class Huffman {
                     str.append((char) temp);
                 }
                 freqMap.put(character, Integer.parseInt(str.toString()));
+                buffer.mark(c);
             }
-            if ((char) temp == '\n') {
-                break;
-            }
+//            if ((char) temp == '\n') {
+//                break;
+//            }
         }
     }
-
 
     /* TODO: Encode replace every character with its corresponding code word */
     private void encode() throws IOException {
@@ -144,35 +144,42 @@ public class Huffman {
             myWriter.write(codeword.get(character));
         }
         reader.close();
-/*        String s = freqMap.toString().replaceAll("[{}]", " ");
-        String[] pairs = s.split(",");
-        for (String pair : pairs) {
-            output.write(pair + "\n");
-            //System.out.println(pair);
-        }
-        //System.out.println();
-        output.write("\n");
-
-        s = codeword.toString().replaceAll("[{}]", " ");
-        String[] pairsCodeWord = s.split(",");
-
-        for (String pair : pairsCodeWord) {
-            output.write(pair + "\n");
-            //  System.out.println(pair);
-        }
-*/
         myWriter.close();
     }
 
-    private void decode(FileWriter fileWriter ,BufferedReader buffer) throws IOException {
+    private char TranslateCodeword(Node node, String code) {
+        if (node instanceof Leaf) {
+            return ((Leaf) node).getCharacter();
+
+        }
+        char a = TranslateCodeword(node.getLeftNode(), code.concat("0"));
+        TranslateCodeword(node.getRightNode(), code.concat("1"));
+        return 0;
+    }
+
+    private void decode(FileWriter fileWriter, BufferedReader buffer) throws IOException {
         int c = 0;
         int temp;
         /* read char by char to map in the tree */
+        buffer.reset();
+        StringBuilder str = new StringBuilder();
+        Node node = root;
         while ((c = buffer.read()) != -1) {
-            System.out.println((char) c);
+            char character = (char) c;
+            /* TODO: replace */
+            if (node instanceof Leaf) {
+                fileWriter.write(((Leaf) node).getCharacter());
+                node = root;
+            }
+            if (character == '0') {
+                node = node.getLeftNode();
+            } else if (character == '1') {
+                node = node.getRightNode();
+            }
         }
-
+        fileWriter.write(((Leaf) node).getCharacter());
     }
+
     private void decompress() throws IOException {
 
         /* Creation of File Descriptor for input file */
@@ -185,7 +192,7 @@ public class Huffman {
         BufferedReader buffer = new BufferedReader(reader);
 
         /* Creat decompressed File */
-        FileWriter fileWriter = new FileWriter("extracted"+filename);
+        FileWriter fileWriter = new FileWriter("extracted" + filename);
 
         readCodeword(buffer);
         createTree();
@@ -194,6 +201,7 @@ public class Huffman {
         decode(fileWriter, buffer);
 
         reader.close();
+        fileWriter.close();
     }
 
 }
