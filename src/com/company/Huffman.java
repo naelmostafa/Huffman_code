@@ -1,6 +1,8 @@
 package com.company;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class Huffman {
@@ -8,6 +10,7 @@ public class Huffman {
     private Map<Character, Integer> freqMap;
     private Map<Character, String> codeword;
     private String filename;
+    private float ratio;
 
     public Huffman(String option, String filename) throws IOException {
         option = option.toLowerCase();
@@ -127,14 +130,15 @@ public class Huffman {
 
         createTree();
         generateCodeword();
-
-        FileWriter myWriter = new FileWriter(filename + ".hc");
+        String compressedName = "6169.1." + filename + ".hc";
+        File compressedFile = new File(compressedName);
+        FileWriter myWriter = new FileWriter(compressedFile);
         writeCodeword(myWriter);
 
         /* Creation of File Descriptor for input file */
-        File file = new File(filename);
+        File decompressedFile = new File(filename);
         /* Creation of File Reader object */
-        FileReader reader = new FileReader(file);
+        FileReader reader = new FileReader(decompressedFile);
         /* Creation of BufferedReader object */
         BufferedReader buffer = new BufferedReader(reader);
         /* Read char by Char */
@@ -145,6 +149,14 @@ public class Huffman {
         }
         reader.close();
         myWriter.close();
+
+        /* File size in kilobytes */
+        long compressedSize = (Files.size(Paths.get(compressedName))) / 1024;
+        System.out.println("CompressedSize  = " + String.format("%,d kilobyte", compressedSize));
+        long uncompressedSize = (Files.size(Paths.get(filename))) / 1024;
+        System.out.println("UncompressedSize = " + String.format("%,d kilobyte", uncompressedSize));
+        ratio = (float) compressedSize / uncompressedSize;
+        System.out.println("Compression ratio = " + ratio);
     }
 
     private char TranslateCodeword(Node node, String code) {
@@ -180,24 +192,38 @@ public class Huffman {
         fileWriter.write(((Leaf) node).getCharacter());
     }
 
+    /**
+     * reference tutorialsPoint.com
+     **/
+    private String removeEx(String name) {
+        int pos = name.lastIndexOf('.');
+        if (pos > -1)
+            return name.substring(0, pos);
+        else
+            return name;
+    }
+    private long getFileSize(File file) {
+        long length = file.length();
+        return length;
+    }
     private void decompress() throws IOException {
-
         /* Creation of File Descriptor for input file */
-        File file = new File(filename);
+        File compressedFile = new File(filename);
 
         /* Creation of File Reader object */
-        FileReader reader = new FileReader(file);
+        FileReader reader = new FileReader(compressedFile);
 
         /* Creation of BufferedReader object */
         BufferedReader buffer = new BufferedReader(reader);
 
         /* Creat decompressed File */
-        FileWriter fileWriter = new FileWriter("extracted" + filename);
+        String decompressedName = "extracted" + removeEx(filename);
+        File decompressedFile = new File(decompressedName);
+        FileWriter fileWriter = new FileWriter(decompressedFile);
 
         readCodeword(buffer);
         createTree();
         generateCodeword();
-
         decode(fileWriter, buffer);
 
         reader.close();

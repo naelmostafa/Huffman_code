@@ -7,7 +7,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        Huffman huffman = new Huffman(args[0], args[1]);
+//        Huffman huffman = new Huffman(args[0], args[1]);
+        Huffman huffman = new Huffman("c", "lecture7 - Greedy algorithms.pdf");
     }
 }
 
